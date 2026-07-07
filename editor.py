@@ -23,6 +23,16 @@ class Editor:
 
         self.image = pygame.image.load(str(paths.IMAGE)).convert()
 
+        self.camera = Camera()
+
+        self.camera.offset_x = (
+            config.WINDOW_WIDTH - self.image.get_width()
+        ) / 2
+
+        self.camera.offset_y = (
+            config.WINDOW_HEIGHT - self.image.get_height()
+        ) / 2
+
         self.running = True
 
         self.panning = False
