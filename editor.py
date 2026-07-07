@@ -25,6 +25,9 @@ class Editor:
 
         self.running = True
 
+        self.panning = False
+        self.last_mouse_pos = (0, 0)
+
     def handle_events(self) -> None:
         for event in pygame.event.get():
 
