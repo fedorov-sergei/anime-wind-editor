@@ -1,97 +1,110 @@
+import sys
+
 import pygame
-import numpy as np
 
-IMAGE = "17110752_xl_optimized.webp"
+import config
+import paths
+from camera import Camera
 
-pygame.init()
 
-# ---------- load image ----------
-img = pygame.image.load(IMAGE)
+class Editor:
+    def __init__(self) -> None:
+        pygame.init()
 
-iw, ih = img.get_size()
+        self.screen = pygame.display.set_mode(
+            (config.WINDOW_WIDTH, config.WINDOW_HEIGHT)
+        )
+        pygame.display.set_caption(config.WINDOW_TITLE)
 
-MAX_W = 1400
-MAX_H = 900
+        self.clock = pygame.time.Clock()
+        self.font = pygame.font.SysFont(None, 22)
 
-scale = min(MAX_W / iw, MAX_H / ih, 1.0)
+        self.camera = Camera()
 
-sw = int(iw * scale)
-sh = int(ih * scale)
+        self.image = pygame.image.load(str(paths.IMAGE)).convert()
 
-screen = pygame.display.set_mode((sw, sh))
-pygame.display.set_caption("Mask Editor")
+        self.running = True
 
-# Теперь можно convert()
-img = img.convert()
+    def handle_events(self) -> None:
+        for event in pygame.event.get():
 
-display_img = pygame.transform.smoothscale(img, (sw, sh))
+            if event.type == pygame.QUIT:
+                self.running = False
 
-clock = pygame.time.Clock()
+            elif event.type == pygame.KEYDOWN:
 
-# ---------- mask ----------
-mask = pygame.Surface((sw, sh), pygame.SRCALPHA)
+                if event.key == pygame.K_ESCAPE:
+                    self.running = False
 
-brush = 18
-show_mask = True
+    def draw(self) -> None:
 
-running = True
+        self.screen.fill(config.BACKGROUND_COLOR)
 
-while running:
+        x, y = self.camera.world_to_screen(0, 0)
 
-    for event in pygame.event.get():
+        image = pygame.transform.smoothscale(
+            self.image,
+            (
+                int(self.image.get_width() * self.camera.zoom),
+                int(self.image.get_height() * self.camera.zoom),
+            ),
+        )
 
-        if event.type == pygame.QUIT:
-            running = False
+        self.screen.blit(image, (x, y))
 
-        elif event.type == pygame.KEYDOWN:
+        mx, my = pygame.mouse.get_pos()
+        wx, wy = self.camera.screen_to_world(mx, my)
 
-            if event.key == pygame.K_ESCAPE:
-                running = False
+        status = (
+            f"Zoom {self.camera.zoom:.2f}   "
+            f"World ({int(wx)}, {int(wy)})"
+        )
 
-            elif event.key == pygame.K_s:
-                arr = pygame.surfarray.array_alpha(mask)
+        text = self.font.render(
+            status,
+            True,
+            config.STATUS_TEXT_COLOR,
+        )
 
-                binary = np.where(arr > 0, 255, 0).astype(np.uint8)
+        pygame.draw.rect(
+            self.screen,
+            config.STATUS_BAR_COLOR,
+            (
+                0,
+                config.WINDOW_HEIGHT - config.STATUS_BAR_HEIGHT,
+                config.WINDOW_WIDTH,
+                config.STATUS_BAR_HEIGHT,
+            ),
+        )
 
-                surf = pygame.Surface((sw, sh))
-                pygame.surfarray.blit_array(
-                    surf,
-                    np.dstack([binary]*3)
-                )
+        self.screen.blit(
+            text,
+            (
+                10,
+                config.WINDOW_HEIGHT - config.STATUS_BAR_HEIGHT + 4,
+            ),
+        )
 
-                pygame.image.save(surf, "mask_preview.png")
-                print("Saved mask_preview.png")
+        pygame.display.flip()
 
-            elif event.key == pygame.K_TAB:
-                show_mask = not show_mask
+    def run(self) -> None:
 
-        elif event.type == pygame.MOUSEWHEEL:
+        while self.running:
 
-            brush += event.y * 2
-            brush = max(2, min(150, brush))
+            self.handle_events()
 
-    buttons = pygame.mouse.get_pressed()
+            self.draw()
 
-    if buttons[0] or buttons[2]:
+            self.clock.tick(60)
 
-        x, y = pygame.mouse.get_pos()
+        pygame.quit()
+        sys.exit()
 
-        color = (255,0,0,120)
 
-        if buttons[2]:
-            color = (0,0,0,0)
+def main() -> None:
+    editor = Editor()
+    editor.run()
 
-        pygame.draw.circle(mask, color, (x,y), brush)
 
-    screen.blit(display_img, (0,0))
-
-    if show_mask:
-        screen.blit(mask, (0,0))
-
-    mx, my = pygame.mouse.get_pos()
-    pygame.draw.circle(screen, (255,255,255), (mx,my), brush, 1)
-
-    pygame.display.flip()
-    clock.tick(60)
-
-pygame.quit()
+if __name__ == "__main__":
+    main()
