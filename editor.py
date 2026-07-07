@@ -37,6 +37,7 @@ class Editor:
 
         self.panning = False
         self.last_mouse_pos = (0, 0)
+        self.show_help = False
 
     def handle_events(self) -> None:
         for event in pygame.event.get():
@@ -48,6 +49,9 @@ class Editor:
 
                 if event.key == pygame.K_ESCAPE:
                     self.running = False
+
+                elif event.key == pygame.K_h:
+                    self.show_help = not self.show_help
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
 
@@ -138,7 +142,54 @@ class Editor:
             ),
         )
 
+        if self.show_help:
+            self.draw_help()
+
         pygame.display.flip()
+
+
+    def draw_help(self):
+
+        panel = pygame.Surface(
+            (400, 220),
+            pygame.SRCALPHA
+        )
+
+        panel.fill((0, 0, 0, config.HELP_ALPHA))
+
+        self.screen.blit(
+            panel,
+            (50, 50)
+        )
+
+        lines = [
+            "ANIME WIND EDITOR",
+            "",
+            "Mouse:",
+            "  Wheel   Zoom",
+            "  Middle  Pan",
+            "",
+            "Keyboard:",
+            "  H       Help",
+            "  ESC     Exit",
+        ]
+
+        y = 70
+
+        for line in lines:
+            text = self.font.render(
+                line,
+                True,
+                config.STATUS_TEXT_COLOR,
+            )
+
+            self.screen.blit(
+                text,
+                (70, y)
+            )
+
+            y += 22
+
 
     def run(self) -> None:
 
