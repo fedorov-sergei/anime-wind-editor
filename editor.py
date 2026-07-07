@@ -71,6 +71,23 @@ class Editor:
                     self.camera.pan(dx, dy)
 
                     self.last_mouse_pos = event.pos
+            
+            elif event.type == pygame.MOUSEWHEEL:
+
+                mouse_x, mouse_y = pygame.mouse.get_pos()
+
+                if event.y > 0:
+                    factor = config.ZOOM_STEP
+                else:
+                    factor = 1 / config.ZOOM_STEP
+
+                self.camera.zoom_at(
+                    factor=factor,
+                    mouse_x=mouse_x,
+                    mouse_y=mouse_y,
+                    min_zoom=config.MIN_ZOOM,
+                    max_zoom=config.MAX_ZOOM,
+                )
 
     def draw(self) -> None:
 
