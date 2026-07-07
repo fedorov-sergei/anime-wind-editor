@@ -39,6 +39,29 @@ class Editor:
                 if event.key == pygame.K_ESCAPE:
                     self.running = False
 
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+
+                # middle mouse button
+                if event.button == 2:
+                    self.panning = True
+                    self.last_mouse_pos = event.pos
+
+            elif event.type == pygame.MOUSEBUTTONUP:
+
+                # middle mouse button release
+                if event.button == 2:
+                    self.panning = False
+
+            elif event.type == pygame.MOUSEMOTION:
+
+                if self.panning:
+                    dx = event.pos[0] - self.last_mouse_pos[0]
+                    dy = event.pos[1] - self.last_mouse_pos[1]
+
+                    self.camera.pan(dx, dy)
+
+                    self.last_mouse_pos = event.pos
+
     def draw(self) -> None:
 
         self.screen.fill(config.BACKGROUND_COLOR)
