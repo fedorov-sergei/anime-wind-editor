@@ -48,6 +48,8 @@ class Editor:
         self.current_layer = 1
         self.layer_count = 4
 
+        self.brush_size = config.DEFAULT_BRUSH_SIZE
+
     def handle_events(self) -> None:
         for event in pygame.event.get():
 
@@ -167,6 +169,8 @@ class Editor:
         if self.show_help:
             self.draw_help()
 
+        self.draw_brush_cursor()
+
         pygame.display.flip()
 
 
@@ -211,6 +215,23 @@ class Editor:
             )
 
             y += 22
+
+    def draw_brush_cursor(self) -> None:
+
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+
+        radius = int(self.brush_size * self.camera.zoom)
+
+        if radius < 2:
+            radius = 2
+
+        pygame.draw.circle(
+            self.screen,
+            (255, 255, 255),
+            (mouse_x, mouse_y),
+            radius,
+            1,
+        )
 
 
     def run(self) -> None:
