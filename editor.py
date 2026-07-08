@@ -5,6 +5,7 @@ import pygame
 import config
 import paths
 from camera import Camera
+from layer_manager import LayerManager
 
 
 class Editor:
@@ -23,6 +24,11 @@ class Editor:
 
         self.image = pygame.image.load(str(paths.IMAGE)).convert()
 
+        self.layer_manager = LayerManager(
+            self.image.get_width(),
+            self.image.get_height(),
+        )
+
         self.camera = Camera()
 
         self.camera.offset_x = (
@@ -39,6 +45,9 @@ class Editor:
         self.last_mouse_pos = (0, 0)
         self.show_help = False
 
+        self.current_layer = 1
+        self.layer_count = 4
+
     def handle_events(self) -> None:
         for event in pygame.event.get():
 
@@ -52,6 +61,18 @@ class Editor:
 
                 elif event.key == pygame.K_h:
                     self.show_help = not self.show_help
+
+                elif event.key == pygame.K_1:
+                    self.current_layer = 1
+
+                elif event.key == pygame.K_2:
+                    self.current_layer = 2
+
+                elif event.key == pygame.K_3:
+                    self.current_layer = 3
+
+                elif event.key == pygame.K_4:
+                    self.current_layer = 4
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
 
@@ -114,6 +135,7 @@ class Editor:
 
         status = (
             f"Zoom {self.camera.zoom:.2f}   "
+            f"Layer {self.current_layer}   "
             f"World ({int(wx)}, {int(wy)})"
         )
 
