@@ -45,6 +45,8 @@ class Editor:
         self.last_mouse_pos = (0, 0)
         self.show_help = False
 
+        self.painting = False
+
         self.current_layer = 1
         self.layer_count = 4
 
@@ -83,12 +85,19 @@ class Editor:
                     self.panning = True
                     self.last_mouse_pos = event.pos
 
+                if event.button == 1:
+                    self.painting = True
+                    self.paint(event.pos)
+
             elif event.type == pygame.MOUSEBUTTONUP:
 
                 # middle mouse button release
                 if event.button == 2:
                     self.panning = False
 
+                if event.button == 1:
+                    self.painting = False
+                    
             elif event.type == pygame.MOUSEMOTION:
 
                 if self.panning:
@@ -98,6 +107,9 @@ class Editor:
                     self.camera.pan(dx, dy)
 
                     self.last_mouse_pos = event.pos
+
+                if self.painting:
+                    self.paint(event.pos)
             
             elif event.type == pygame.MOUSEWHEEL:
 
@@ -131,6 +143,8 @@ class Editor:
         )
 
         self.screen.blit(image, (x, y))
+
+        self.draw_active_layer(x, y)
 
         mx, my = pygame.mouse.get_pos()
         wx, wy = self.camera.screen_to_world(mx, my)
@@ -233,6 +247,42 @@ class Editor:
             1,
         )
 
+    def paint(self, mouse_pos) -> None:
+
+        world_x, world_y = self.camera.screen_to_world(
+            mouse_pos[0],
+            mouse_pos[1],
+        )
+
+        layer = self.layer_manager.get(self.current_layer)
+
+        pygame.draw.circle(
+            layer,
+            (255, 255, 255, 255),
+            (int(world_x), int(world_y)),
+            self.brush_size,
+        )
+
+    def draw_active_layer(self, x: float, y: float) -> None:
+
+        layer = self.layer_manager.get(self.current_layer)
+
+        overlay = layer.copy()
+
+        overlay.fill(
+            (255, 0, 0, 120),
+            special_flags=pygame.BLEND_RGBA_MULT,
+        )
+
+        overlay = pygame.transform.smoothscale(
+            overlay,
+            (
+                int(layer.get_width() * self.camera.zoom),
+                int(layer.get_height() * self.camera.zoom),
+            ),
+        )
+
+        self.screen.blit(overlay, (x, y))
 
     def run(self) -> None:
 
