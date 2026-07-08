@@ -46,6 +46,7 @@ class Editor:
         self.show_help = False
 
         self.painting = False
+        self.last_paint_pos = None
 
         self.current_layer = 1
         self.layer_count = 4
@@ -87,6 +88,7 @@ class Editor:
 
                 if event.button == 1:
                     self.painting = True
+                    self.last_paint_pos = None
                     self.paint(event.pos)
 
             elif event.type == pygame.MOUSEBUTTONUP:
@@ -97,6 +99,7 @@ class Editor:
 
                 if event.button == 1:
                     self.painting = False
+                    self.last_paint_pos = None
                     
             elif event.type == pygame.MOUSEMOTION:
 
@@ -254,14 +257,31 @@ class Editor:
             mouse_pos[1],
         )
 
+        current = (
+            int(world_x),
+            int(world_y),
+        )
+
         layer = self.layer_manager.get(self.current_layer)
+
+        if self.last_paint_pos is not None:
+
+            pygame.draw.line(
+                layer,
+                (255, 255, 255, 255),
+                self.last_paint_pos,
+                current,
+                self.brush_size * 2,
+            )
 
         pygame.draw.circle(
             layer,
             (255, 255, 255, 255),
-            (int(world_x), int(world_y)),
+            current,
             self.brush_size,
         )
+
+        self.last_paint_pos = current
 
     def draw_active_layer(self, x: float, y: float) -> None:
 
