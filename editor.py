@@ -79,6 +79,20 @@ class Editor:
                 elif event.key == pygame.K_4:
                     self.current_layer = 4
 
+                elif event.key == pygame.K_LEFTBRACKET:
+
+                    self.brush_size = max(
+                        config.MIN_BRUSH_SIZE,
+                        self.brush_size - 2,
+                    )
+
+                elif event.key == pygame.K_RIGHTBRACKET:
+
+                    self.brush_size = min(
+                        config.MAX_BRUSH_SIZE,
+                        self.brush_size + 2,
+                    )
+
             elif event.type == pygame.MOUSEBUTTONDOWN:
 
                 # middle mouse button
@@ -154,6 +168,7 @@ class Editor:
 
         status = (
             f"Zoom {self.camera.zoom:.2f}   "
+            f"Brush {self.brush_size}   "
             f"Layer {self.current_layer}   "
             f"World ({int(wx)}, {int(wy)})"
         )
