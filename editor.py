@@ -1,3 +1,4 @@
+import project_io
 import sys
 
 import pygame
@@ -100,6 +101,15 @@ class Editor:
                         config.MAX_BRUSH_SIZE,
                         self.brush_size + 2,
                     )
+
+                elif event.key == pygame.K_s:
+
+                    project_io.save_layers(
+                        paths.OUTPUT,
+                        self.layer_manager,
+                    )
+
+                    print("Project saved")
 
             elif event.type == pygame.MOUSEBUTTONDOWN:
 
