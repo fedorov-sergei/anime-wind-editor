@@ -5,7 +5,7 @@ WINDOW_TITLE = "Anime Wind Editor"
 
 # Camera
 MIN_ZOOM = 0.10
-MAX_ZOOM = 8.00
+MAX_ZOOM = 4.00
 ZOOM_STEP = 1.10
 
 # Brush

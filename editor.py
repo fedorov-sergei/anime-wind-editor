@@ -24,6 +24,12 @@ class Editor:
 
         self.image = pygame.image.load(str(paths.IMAGE)).convert()
 
+        self.cached_zoom = None
+        self.cached_image = None
+        self.cached_overlay = None
+
+        self.layer_dirty = True
+
         self.layer_manager = LayerManager(
             self.image.get_width(),
             self.image.get_height(),
@@ -50,6 +56,7 @@ class Editor:
 
         self.current_layer = 1
         self.layer_count = 4
+        self.cached_layer = None
 
         self.brush_size = config.DEFAULT_BRUSH_SIZE
 
@@ -147,6 +154,8 @@ class Editor:
 
     def draw(self) -> None:
 
+        self.update_render_cache()
+
         self.screen.fill(config.BACKGROUND_COLOR)
 
         x, y = self.camera.world_to_screen(0, 0)
@@ -159,7 +168,10 @@ class Editor:
             ),
         )
 
-        self.screen.blit(image, (x, y))
+        self.screen.blit(
+            self.cached_image,
+            (x, y),
+        )
 
         self.draw_active_layer(x, y)
 
@@ -298,8 +310,29 @@ class Editor:
 
         self.last_paint_pos = current
 
-    def draw_active_layer(self, x: float, y: float) -> None:
+        self.layer_dirty = True
 
+    def update_render_cache(self) -> None:
+        
+
+        if (
+            self.cached_zoom == self.camera.zoom
+            and self.cached_layer == self.current_layer
+            and not self.layer_dirty
+        ):
+            return
+
+        self.cached_zoom = self.camera.zoom
+
+
+        self.cached_image = pygame.transform.smoothscale(
+            self.image,
+            (
+                int(self.image.get_width() * self.camera.zoom),
+                int(self.image.get_height() * self.camera.zoom),
+            ),
+        )
+        
         layer = self.layer_manager.get(self.current_layer)
 
         overlay = layer.copy()
@@ -309,7 +342,8 @@ class Editor:
             special_flags=pygame.BLEND_RGBA_MULT,
         )
 
-        overlay = pygame.transform.smoothscale(
+
+        self.cached_overlay = pygame.transform.smoothscale(
             overlay,
             (
                 int(layer.get_width() * self.camera.zoom),
@@ -317,7 +351,15 @@ class Editor:
             ),
         )
 
-        self.screen.blit(overlay, (x, y))
+        self.cached_layer = self.current_layer
+        self.layer_dirty = False
+
+    def draw_active_layer(self, x: float, y: float) -> None:
+
+        self.screen.blit(
+            self.cached_overlay,
+            (x, y),
+        )
 
     def run(self) -> None:
 
