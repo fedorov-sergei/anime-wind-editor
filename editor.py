@@ -52,6 +52,7 @@ class Editor:
         self.show_help = False
 
         self.painting = False
+        self.erase_mode = False
         self.last_paint_pos = None
 
         self.current_layer = 1
@@ -108,6 +109,13 @@ class Editor:
                     self.last_mouse_pos = event.pos
 
                 if event.button == 1:
+                    self.erase_mode = False
+                    self.painting = True
+                    self.last_paint_pos = None
+                    self.paint(event.pos)
+
+                if event.button == 3:
+                    self.erase_mode = True
                     self.painting = True
                     self.last_paint_pos = None
                     self.paint(event.pos)
@@ -118,7 +126,7 @@ class Editor:
                 if event.button == 2:
                     self.panning = False
 
-                if event.button == 1:
+                if event.button in (1, 3):
                     self.painting = False
                     self.last_paint_pos = None
                     
@@ -178,10 +186,17 @@ class Editor:
         mx, my = pygame.mouse.get_pos()
         wx, wy = self.camera.screen_to_world(mx, my)
 
+        if self.erase_mode:
+            mode = "Erase"
+        else:
+            mode = "Draw"
+
+
         status = (
             f"Zoom {self.camera.zoom:.2f}   "
             f"Brush {self.brush_size}   "
             f"Layer {self.current_layer}   "
+            f"Mode {mode}   "
             f"World ({int(wx)}, {int(wy)})"
         )
 
@@ -291,11 +306,16 @@ class Editor:
 
         layer = self.layer_manager.get(self.current_layer)
 
+        if self.erase_mode:
+            color = (0, 0, 0, 0)
+        else:
+            color = (255, 255, 255, 255)
+
         if self.last_paint_pos is not None:
 
             pygame.draw.line(
                 layer,
-                (255, 255, 255, 255),
+                color,
                 self.last_paint_pos,
                 current,
                 self.brush_size * 2,
@@ -303,7 +323,7 @@ class Editor:
 
         pygame.draw.circle(
             layer,
-            (255, 255, 255, 255),
+            color,
             current,
             self.brush_size,
         )
