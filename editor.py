@@ -56,6 +56,9 @@ class Editor:
         self.erase_mode = False
         self.last_paint_pos = None
 
+        self.message = ""
+        self.message_until = 0
+
         self.current_layer = 1
         self.layer_count = 4
         self.cached_layer = None
@@ -104,10 +107,17 @@ class Editor:
 
                 elif event.key == pygame.K_s:
 
+                    start = pygame.time.get_ticks()
+
                     project_io.save_layers(
                         paths.OUTPUT,
                         self.layer_manager,
                     )
+
+                    print("Save:", pygame.time.get_ticks() - start, "ms")
+
+                    self.message = "Project saved"
+                    self.message_until = pygame.time.get_ticks() + 2000
 
                     print("Project saved")
 
@@ -169,6 +179,47 @@ class Editor:
                     min_zoom=config.MIN_ZOOM,
                     max_zoom=config.MAX_ZOOM,
                 )
+
+
+    def draw_message(self) -> None:
+
+        if pygame.time.get_ticks() > self.message_until:
+            return
+
+        text = self.font.render(
+            self.message,
+            True,
+            (255, 255, 255),
+        )
+
+        padding = 10
+
+        rect = text.get_rect()
+
+        rect.topright = (
+            config.WINDOW_WIDTH - padding,
+            padding,
+        )
+
+        background = pygame.Rect(
+            rect.left - 8,
+            rect.top - 4,
+            rect.width + 16,
+            rect.height + 8,
+        )
+
+        pygame.draw.rect(
+            self.screen,
+            (40, 40, 40),
+            background,
+            border_radius=6,
+        )
+
+        self.screen.blit(
+            text,
+            rect,
+        )
+
 
     def draw(self) -> None:
 
@@ -237,6 +288,8 @@ class Editor:
 
         if self.show_help:
             self.draw_help()
+
+        self.draw_message()
 
         self.draw_brush_cursor()
 
