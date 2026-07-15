@@ -1,8 +1,21 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Project output
 output/
 projects/
 
+# Environment files
 .env
+
+# macOS
 .DS_Store
+
+# VS Code (optional)
+.vscode/
