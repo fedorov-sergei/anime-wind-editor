@@ -7,7 +7,7 @@ import config
 import paths
 from camera import Camera
 from layer_manager import LayerManager
-
+from animator import Animator
 
 class Editor:
     def __init__(self) -> None:
@@ -64,6 +64,8 @@ class Editor:
         self.cached_layer = None
 
         self.brush_size = config.DEFAULT_BRUSH_SIZE
+
+        self.animator = Animator()
 
     def handle_events(self) -> None:
         for event in pygame.event.get():
@@ -448,11 +450,13 @@ class Editor:
 
         while self.running:
 
+            dt = self.clock.tick(60) / 1000.0
+
             self.handle_events()
 
-            self.draw()
+            self.animator.update(dt)
 
-            self.clock.tick(60)
+            self.draw()
 
         pygame.quit()
         sys.exit()
