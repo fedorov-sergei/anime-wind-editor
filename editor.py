@@ -27,6 +27,7 @@ class Editor:
 
         self.cached_zoom = None
         self.cached_image = None
+        self.cached_layer_image = None
         self.cached_overlay = None
 
         self.layer_dirty = True
@@ -61,7 +62,7 @@ class Editor:
 
         self.current_layer = 1
         self.layer_count = 4
-        self.cached_layer = None
+        self.cached_layer_index = None
 
         self.brush_size = config.DEFAULT_BRUSH_SIZE
 
@@ -398,17 +399,15 @@ class Editor:
         self.layer_dirty = True
 
     def update_render_cache(self) -> None:
-        
 
         if (
             self.cached_zoom == self.camera.zoom
-            and self.cached_layer == self.current_layer
+            and self.cached_layer_index == self.current_layer
             and not self.layer_dirty
         ):
             return
 
         self.cached_zoom = self.camera.zoom
-
 
         self.cached_image = pygame.transform.smoothscale(
             self.image,
@@ -417,8 +416,16 @@ class Editor:
                 int(self.image.get_height() * self.camera.zoom),
             ),
         )
-        
+
         layer = self.layer_manager.get(self.current_layer)
+
+        self.cached_layer_image = pygame.transform.smoothscale(
+            layer,
+            (
+                int(layer.get_width() * self.camera.zoom),
+                int(layer.get_height() * self.camera.zoom),
+            ),
+        )
 
         overlay = layer.copy()
 
@@ -426,7 +433,6 @@ class Editor:
             (255, 0, 0, 120),
             special_flags=pygame.BLEND_RGBA_MULT,
         )
-
 
         self.cached_overlay = pygame.transform.smoothscale(
             overlay,
@@ -436,7 +442,7 @@ class Editor:
             ),
         )
 
-        self.cached_layer = self.current_layer
+        self.cached_layer_index = self.current_layer
         self.layer_dirty = False
 
     def draw_active_layer(self, x: float, y: float) -> None:
