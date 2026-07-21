@@ -8,6 +8,7 @@ import paths
 from camera import Camera
 from layer_manager import LayerManager
 from animator import Animator
+from renderer import Renderer
 
 class Editor:
     def __init__(self) -> None:
@@ -67,6 +68,7 @@ class Editor:
         self.brush_size = config.DEFAULT_BRUSH_SIZE
 
         self.animator = Animator()
+        self.renderer = Renderer()
 
     def handle_events(self) -> None:
         for event in pygame.event.get():
@@ -240,8 +242,14 @@ class Editor:
             ),
         )
 
-        self.screen.blit(
+        image = self.renderer.render(
             self.cached_image,
+            self.cached_layer_image,
+            (20, 0),
+        )
+
+        self.screen.blit(
+            image,
             (x, y),
         )
 
