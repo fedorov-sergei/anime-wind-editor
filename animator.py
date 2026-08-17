@@ -15,4 +15,8 @@ class Animator:
             x = math.sin(self.time * 2.0) * 10
             return (x, 0)
 
+        if layer_index == 2:
+            y = math.sin(self.time * 1.5) * 6
+            return (0, y)
+
         return (0, 0)

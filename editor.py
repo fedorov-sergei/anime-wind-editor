@@ -244,15 +244,10 @@ class Editor:
 
         animation_offset = self.animator.get_offset(self.current_layer)
 
-        offset = (
-            20 + animation_offset[0],
-            0 + animation_offset[1],
-        )
-
         image = self.renderer.render(
             self.cached_image,
             self.cached_layer_image,
-            offset,
+            animation_offset,
         )
 
         self.screen.blit(
