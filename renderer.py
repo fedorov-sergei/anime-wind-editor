@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import List, Tuple
 
 import pygame
 
@@ -8,15 +8,15 @@ class Renderer:
     def render(
         self,
         image: pygame.Surface,
-        layer: pygame.Surface,
-        offset: Tuple[int, int],
+        layers: List[Tuple[pygame.Surface, Tuple[int, int]]],
     ) -> pygame.Surface:
-         
+
         result = image.copy()
 
-        result.blit(
-            layer,
-            offset,
-        )
+        for layer, offset in layers:
+            result.blit(
+                layer,
+                offset,
+            )
 
         return result

@@ -29,6 +29,7 @@ class Editor:
         self.cached_zoom = None
         self.cached_image = None
         self.cached_layer_image = None
+        self.cached_layer_images = {}
         self.cached_overlay = None
 
         self.layer_dirty = True
@@ -242,12 +243,23 @@ class Editor:
             ),
         )
 
-        animation_offset = self.animator.get_offset(self.current_layer)
+        layers = []
+
+        for layer_index in range(1, self.layer_count + 1):
+            layer_image = self.cached_layer_images[layer_index]
+
+            animation_offset = self.animator.get_offset(layer_index)
+
+            layers.append(
+                (
+                    layer_image,
+                    animation_offset,
+                )
+            )
 
         image = self.renderer.render(
             self.cached_image,
-            self.cached_layer_image,
-            animation_offset,
+            layers,
         )
 
         self.screen.blit(
@@ -429,15 +441,30 @@ class Editor:
 
         layer = self.layer_manager.get(self.current_layer)
 
+        current_layer = self.layer_manager.get(self.current_layer)
+
         self.cached_layer_image = pygame.transform.smoothscale(
-            layer,
+            current_layer,
             (
-                int(layer.get_width() * self.camera.zoom),
-                int(layer.get_height() * self.camera.zoom),
+                int(current_layer.get_width() * self.camera.zoom),
+                int(current_layer.get_height() * self.camera.zoom),
             ),
         )
 
-        overlay = layer.copy()
+        self.cached_layer_images = {}
+
+        for layer_index in range(1, self.layer_count + 1):
+            layer = self.layer_manager.get(layer_index)
+
+            self.cached_layer_images[layer_index] = pygame.transform.smoothscale(
+                layer,
+                (
+                    int(layer.get_width() * self.camera.zoom),
+                    int(layer.get_height() * self.camera.zoom),
+                ),
+            )
+
+        overlay = current_layer.copy()
 
         overlay.fill(
             (255, 0, 0, 120),
