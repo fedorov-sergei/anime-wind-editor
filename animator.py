@@ -87,3 +87,17 @@ class Animator:
             return (0, value, rotation)
 
         return (0, 0, rotation)
+
+    def set_axis(self, layer_index, axis):
+        settings = self.layers.get(layer_index)
+
+        if settings is not None and axis in ("x", "y"):
+            settings["axis"] = axis
+
+    def get_axis(self, layer_index):
+        settings = self.layers.get(layer_index)
+
+        if settings is None:
+            return "x"
+
+        return settings["axis"]

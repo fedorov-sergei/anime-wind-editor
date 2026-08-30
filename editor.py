@@ -151,6 +151,18 @@ class Editor:
                             self.slider_value("speed", event.pos[0]),
                         )
 
+                    elif self.get_axis_rect("x").collidepoint(event.pos):
+                        self.animator.set_axis(
+                            self.current_layer,
+                            "x",
+                        )
+
+                    elif self.get_axis_rect("y").collidepoint(event.pos):
+                        self.animator.set_axis(
+                            self.current_layer,
+                            "y",
+                        )
+
                     else:
                         self.erase_mode = False
                         self.painting = True
@@ -220,7 +232,7 @@ class Editor:
 
     def get_slider_rect(self, name):
         panel_width = 240
-        panel_height = 100
+        panel_height = 135
         panel_x = config.WINDOW_WIDTH - panel_width - 20
         panel_y = (
             config.WINDOW_HEIGHT
@@ -247,6 +259,35 @@ class Editor:
 
         return pygame.Rect(0, 0, 0, 0)
 
+    def get_axis_rect(self, axis):
+        panel_width = 240
+        panel_height = 135
+        panel_x = config.WINDOW_WIDTH - panel_width - 20
+        panel_y = (
+            config.WINDOW_HEIGHT
+            - config.STATUS_BAR_HEIGHT
+            - panel_height
+            - 20
+        )
+
+        if axis == "x":
+            return pygame.Rect(
+                panel_x + 90,
+                panel_y + 92,
+                55,
+                25,
+            )
+
+        if axis == "y":
+            return pygame.Rect(
+                panel_x + 155,
+                panel_y + 92,
+                55,
+                25,
+            )
+
+        return pygame.Rect(0, 0, 0, 0)
+
     def slider_value(self, name, mouse_x):
         rect = self.get_slider_rect(name)
 
@@ -269,7 +310,7 @@ class Editor:
     def draw_animation_controls(self) -> None:
 
         panel_width = 240
-        panel_height = 100
+        panel_height = 135
 
         panel_x = config.WINDOW_WIDTH - panel_width - 20
         panel_y = (
@@ -348,6 +389,68 @@ class Editor:
                 (panel_x + 10, rect.top - 7),
             )
 
+            axis = self.animator.get_axis(self.current_layer)
+
+            axis_label = self.font.render(
+                "Direction",
+                True,
+                (255, 255, 255),
+            )
+
+            self.screen.blit(
+                axis_label,
+                (panel_x + 10, panel_y + 95),
+            )
+
+            x_rect = pygame.Rect(
+                panel_x + 90,
+                panel_y + 92,
+                55,
+                25,
+            )
+
+            y_rect = pygame.Rect(
+                panel_x + 155,
+                panel_y + 92,
+                55,
+                25,
+            )
+
+            pygame.draw.rect(
+                self.screen,
+                (100, 100, 100) if axis != "x" else (180, 180, 180),
+                x_rect,
+                border_radius=5,
+            )
+
+            pygame.draw.rect(
+                self.screen,
+                (100, 100, 100) if axis != "y" else (180, 180, 180),
+                y_rect,
+                border_radius=5,
+            )
+
+            x_text = self.font.render(
+                "X",
+                True,
+                (255, 255, 255),
+            )
+
+            y_text = self.font.render(
+                "Y",
+                True,
+                (255, 255, 255),
+            )
+
+            self.screen.blit(
+                x_text,
+                x_text.get_rect(center=x_rect.center),
+            )
+
+            self.screen.blit(
+                y_text,
+                y_text.get_rect(center=y_rect.center),
+            )
 
     def draw_message(self) -> None:
 
