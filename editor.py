@@ -70,6 +70,7 @@ class Editor:
 
         self.animator = Animator()
         self.renderer = Renderer()
+        self.slider_dragging = None
 
     def handle_events(self) -> None:
         for event in pygame.event.get():
@@ -135,10 +136,26 @@ class Editor:
                     self.last_mouse_pos = event.pos
 
                 if event.button == 1:
-                    self.erase_mode = False
-                    self.painting = True
-                    self.last_paint_pos = None
-                    self.paint(event.pos)
+
+                    if self.get_slider_rect("amount").collidepoint(event.pos):
+                        self.slider_dragging = "amount"
+                        self.animator.set_amplitude(
+                            self.current_layer,
+                            self.slider_value("amount", event.pos[0]),
+                        )
+
+                    elif self.get_slider_rect("speed").collidepoint(event.pos):
+                        self.slider_dragging = "speed"
+                        self.animator.set_speed(
+                            self.current_layer,
+                            self.slider_value("speed", event.pos[0]),
+                        )
+
+                    else:
+                        self.erase_mode = False
+                        self.painting = True
+                        self.last_paint_pos = None
+                        self.paint(event.pos)
 
                 if event.button == 3:
                     self.erase_mode = True
@@ -155,8 +172,23 @@ class Editor:
                 if event.button in (1, 3):
                     self.painting = False
                     self.last_paint_pos = None
+
+                if event.button == 1:
+                    self.slider_dragging = None
                     
             elif event.type == pygame.MOUSEMOTION:
+
+                if self.slider_dragging == "amount":
+                    self.animator.set_amplitude(
+                        self.current_layer,
+                        self.slider_value("amount", event.pos[0]),
+                    )
+
+                elif self.slider_dragging == "speed":
+                    self.animator.set_speed(
+                        self.current_layer,
+                        self.slider_value("speed", event.pos[0]),
+                    )
 
                 if self.panning:
                     dx = event.pos[0] - self.last_mouse_pos[0]
@@ -185,6 +217,136 @@ class Editor:
                     min_zoom=config.MIN_ZOOM,
                     max_zoom=config.MAX_ZOOM,
                 )
+
+    def get_slider_rect(self, name):
+        panel_width = 240
+        panel_height = 100
+        panel_x = config.WINDOW_WIDTH - panel_width - 20
+        panel_y = (
+            config.WINDOW_HEIGHT
+            - config.STATUS_BAR_HEIGHT
+            - panel_height
+            - 20
+        )
+
+        if name == "amount":
+            return pygame.Rect(
+                panel_x + 80,
+                panel_y + 30,
+                140,
+                8,
+            )
+
+        if name == "speed":
+            return pygame.Rect(
+                panel_x + 80,
+                panel_y + 65,
+                140,
+                8,
+            )
+
+        return pygame.Rect(0, 0, 0, 0)
+
+    def slider_value(self, name, mouse_x):
+        rect = self.get_slider_rect(name)
+
+        position = max(
+            0.0,
+            min(
+                1.0,
+                (mouse_x - rect.left) / rect.width,
+            ),
+        )
+
+        if name == "amount":
+            return position * 50.0
+
+        if name == "speed":
+            return position * 5.0
+
+        return 0.0
+
+    def draw_animation_controls(self) -> None:
+
+        panel_width = 240
+        panel_height = 100
+
+        panel_x = config.WINDOW_WIDTH - panel_width - 20
+        panel_y = (
+            config.WINDOW_HEIGHT
+            - config.STATUS_BAR_HEIGHT
+            - panel_height
+            - 20
+        )
+
+        pygame.draw.rect(
+            self.screen,
+            (40, 40, 40),
+            (
+                panel_x,
+                panel_y,
+                panel_width,
+                panel_height,
+            ),
+            border_radius=8,
+        )
+
+        title = self.font.render(
+            f"Layer {self.current_layer}",
+            True,
+            (255, 255, 255),
+        )
+
+        self.screen.blit(
+            title,
+            (panel_x + 10, panel_y + 5),
+        )
+
+        for name, label in (
+            ("amount", "Amount"),
+            ("speed", "Speed"),
+        ):
+            rect = self.get_slider_rect(name)
+
+            pygame.draw.rect(
+                self.screen,
+                (100, 100, 100),
+                rect,
+                border_radius=4,
+            )
+
+            if name == "amount":
+                value = self.animator.get_amplitude(
+                    self.current_layer
+                )
+                maximum = 50.0
+            else:
+                value = self.animator.get_speed(
+                    self.current_layer
+                )
+                maximum = 5.0
+
+            knob_x = rect.left + int(
+                (value / maximum) * rect.width
+            )
+
+            pygame.draw.circle(
+                self.screen,
+                (255, 255, 255),
+                (knob_x, rect.centery),
+                7,
+            )
+
+            text = self.font.render(
+                f"{label} {value:.1f}",
+                True,
+                (255, 255, 255),
+            )
+
+            self.screen.blit(
+                text,
+                (panel_x + 10, rect.top - 7),
+            )
 
 
     def draw_message(self) -> None:
@@ -235,25 +397,17 @@ class Editor:
 
         x, y = self.camera.world_to_screen(0, 0)
 
-        image = pygame.transform.smoothscale(
-            self.image,
-            (
-                int(self.image.get_width() * self.camera.zoom),
-                int(self.image.get_height() * self.camera.zoom),
-            ),
-        )
-
         layers = []
 
         for layer_index in range(1, self.layer_count + 1):
             layer_image = self.cached_layer_images[layer_index]
 
-            animation_offset = self.animator.get_offset(layer_index)
+            transform = self.animator.get_transform(layer_index)
 
             layers.append(
                 (
                     layer_image,
-                    animation_offset,
+                    transform,
                 )
             )
 
@@ -268,6 +422,8 @@ class Editor:
         )
 
         self.draw_active_layer(x, y)
+
+        self.draw_animation_controls()
 
         mx, my = pygame.mouse.get_pos()
         wx, wy = self.camera.screen_to_world(mx, my)
@@ -423,7 +579,9 @@ class Editor:
     def update_render_cache(self) -> None:
 
         if (
-            self.cached_zoom == self.camera.zoom
+            self.cached_image is not None
+            and self.cached_layer_images
+            and self.cached_zoom == self.camera.zoom
             and self.cached_layer_index == self.current_layer
             and not self.layer_dirty
         ):
@@ -438,8 +596,6 @@ class Editor:
                 int(self.image.get_height() * self.camera.zoom),
             ),
         )
-
-        layer = self.layer_manager.get(self.current_layer)
 
         current_layer = self.layer_manager.get(self.current_layer)
 
@@ -474,8 +630,8 @@ class Editor:
         self.cached_overlay = pygame.transform.smoothscale(
             overlay,
             (
-                int(layer.get_width() * self.camera.zoom),
-                int(layer.get_height() * self.camera.zoom),
+                int(current_layer.get_width() * self.camera.zoom),
+                int(current_layer.get_height() * self.camera.zoom),
             ),
         )
 

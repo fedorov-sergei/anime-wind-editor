@@ -13,10 +13,25 @@ class Renderer:
 
         result = image.copy()
 
-        for layer, offset in layers:
+        for layer, transform in layers:
+            x, y, rotation = transform
+
+            if rotation != 0:
+                original_size = layer.get_size()
+
+                layer = pygame.transform.rotate(
+                    layer,
+                    rotation,
+                )
+
+                rotated_size = layer.get_size()
+
+                x -= (rotated_size[0] - original_size[0]) / 2
+                y -= (rotated_size[1] - original_size[1]) / 2
+
             result.blit(
                 layer,
-                offset,
+                (round(x), round(y)),
             )
 
         return result
