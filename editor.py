@@ -54,6 +54,7 @@ class Editor:
         self.panning = False
         self.last_mouse_pos = (0, 0)
         self.show_help = False
+        self.show_animation_panel = True
 
         self.painting = False
         self.erase_mode = False
@@ -72,6 +73,8 @@ class Editor:
         self.renderer = Renderer()
         self.slider_dragging = None
 
+        self.show_animation_controls = True
+
     def handle_events(self) -> None:
         for event in pygame.event.get():
 
@@ -85,6 +88,9 @@ class Editor:
 
                 elif event.key == pygame.K_h:
                     self.show_help = not self.show_help
+
+                elif event.key == pygame.K_a:
+                    self.show_animation_panel = not self.show_animation_panel
 
                 elif event.key == pygame.K_1:
                     self.current_layer = 1
@@ -137,31 +143,50 @@ class Editor:
 
                 if event.button == 1:
 
-                    if self.get_slider_rect("amount").collidepoint(event.pos):
-                        self.slider_dragging = "amount"
-                        self.animator.set_amplitude(
-                            self.current_layer,
-                            self.slider_value("amount", event.pos[0]),
-                        )
+                    if not self.show_animation_panel:
+                        # обычное рисование
+                        self.erase_mode = False
+                        self.painting = True
+                        self.last_paint_pos = None
+                        self.paint(event.pos)
 
-                    elif self.get_slider_rect("speed").collidepoint(event.pos):
-                        self.slider_dragging = "speed"
-                        self.animator.set_speed(
-                            self.current_layer,
-                            self.slider_value("speed", event.pos[0]),
-                        )
+                    elif (
+                        self.show_animation_panel
+                        and self.get_animation_panel_rect().collidepoint(event.pos)
+                    ):
+                        # клик внутри панели — не рисуем
+                        if self.get_slider_rect("amount").collidepoint(event.pos):
+                            self.slider_dragging = "amount"
+                            self.animator.set_amplitude(
+                                self.current_layer,
+                                self.slider_value("amount", event.pos[0]),
+                            )
 
-                    elif self.get_axis_rect("x").collidepoint(event.pos):
-                        self.animator.set_axis(
-                            self.current_layer,
-                            "x",
-                        )
+                        elif self.get_slider_rect("speed").collidepoint(event.pos):
+                            self.slider_dragging = "speed"
+                            self.animator.set_speed(
+                                self.current_layer,
+                                self.slider_value("speed", event.pos[0]),
+                            )
 
-                    elif self.get_axis_rect("y").collidepoint(event.pos):
-                        self.animator.set_axis(
-                            self.current_layer,
-                            "y",
-                        )
+                        elif self.get_slider_rect("rotation").collidepoint(event.pos):
+                            self.slider_dragging = "rotation"
+                            self.animator.set_rotation(
+                                self.current_layer,
+                                self.slider_value("rotation", event.pos[0]),
+                            )
+
+                        elif self.get_axis_rect("x").collidepoint(event.pos):
+                            self.animator.set_axis(
+                                self.current_layer,
+                                "x",
+                            )
+
+                        elif self.get_axis_rect("y").collidepoint(event.pos):
+                            self.animator.set_axis(
+                                self.current_layer,
+                                "y",
+                            )
 
                     else:
                         self.erase_mode = False
@@ -202,6 +227,12 @@ class Editor:
                         self.slider_value("speed", event.pos[0]),
                     )
 
+                elif self.slider_dragging == "rotation":
+                    self.animator.set_rotation(
+                        self.current_layer,
+                        self.slider_value("rotation", event.pos[0]),
+                    )
+
                 if self.panning:
                     dx = event.pos[0] - self.last_mouse_pos[0]
                     dy = event.pos[1] - self.last_mouse_pos[1]
@@ -230,9 +261,28 @@ class Editor:
                     max_zoom=config.MAX_ZOOM,
                 )
 
+    def get_animation_panel_rect(self):
+        panel_width = 260
+        panel_height = 170
+
+        panel_x = config.WINDOW_WIDTH - panel_width - 20
+        panel_y = (
+            config.WINDOW_HEIGHT
+            - config.STATUS_BAR_HEIGHT
+            - panel_height
+            - 20
+        )
+
+        return pygame.Rect(
+            panel_x,
+            panel_y,
+            panel_width,
+            panel_height,
+        )
+
     def get_slider_rect(self, name):
-        panel_width = 240
-        panel_height = 135
+        panel_width = 260
+        panel_height = 170
         panel_x = config.WINDOW_WIDTH - panel_width - 20
         panel_y = (
             config.WINDOW_HEIGHT
@@ -243,7 +293,7 @@ class Editor:
 
         if name == "amount":
             return pygame.Rect(
-                panel_x + 80,
+                panel_x + 112,
                 panel_y + 30,
                 140,
                 8,
@@ -251,8 +301,16 @@ class Editor:
 
         if name == "speed":
             return pygame.Rect(
-                panel_x + 80,
+                panel_x + 112,
                 panel_y + 65,
+                140,
+                8,
+            )
+
+        if name == "rotation":
+            return pygame.Rect(
+                panel_x + 112,
+                panel_y + 100,
                 140,
                 8,
             )
@@ -260,8 +318,9 @@ class Editor:
         return pygame.Rect(0, 0, 0, 0)
 
     def get_axis_rect(self, axis):
-        panel_width = 240
-        panel_height = 135
+        panel_width = 260
+        panel_height = 170
+
         panel_x = config.WINDOW_WIDTH - panel_width - 20
         panel_y = (
             config.WINDOW_HEIGHT
@@ -273,7 +332,7 @@ class Editor:
         if axis == "x":
             return pygame.Rect(
                 panel_x + 90,
-                panel_y + 92,
+                panel_y + 135,
                 55,
                 25,
             )
@@ -281,7 +340,7 @@ class Editor:
         if axis == "y":
             return pygame.Rect(
                 panel_x + 155,
-                panel_y + 92,
+                panel_y + 135,
                 55,
                 25,
             )
@@ -305,12 +364,15 @@ class Editor:
         if name == "speed":
             return position * 5.0
 
+        if name == "rotation":
+            return -15.0 + position * 30.0
+
         return 0.0
 
     def draw_animation_controls(self) -> None:
 
-        panel_width = 240
-        panel_height = 135
+        panel_width = 260
+        panel_height = 170
 
         panel_x = config.WINDOW_WIDTH - panel_width - 20
         panel_y = (
@@ -346,6 +408,7 @@ class Editor:
         for name, label in (
             ("amount", "Amount"),
             ("speed", "Speed"),
+            ("rotation", "Rotation"),
         ):
             rect = self.get_slider_rect(name)
 
@@ -360,15 +423,25 @@ class Editor:
                 value = self.animator.get_amplitude(
                     self.current_layer
                 )
+                minimum = 0.0
                 maximum = 50.0
-            else:
+
+            elif name == "speed":
                 value = self.animator.get_speed(
                     self.current_layer
                 )
+                minimum = 0.0
                 maximum = 5.0
 
+            else:
+                value = self.animator.get_rotation(
+                    self.current_layer
+                )
+                minimum = -15.0
+                maximum = 15.0
+
             knob_x = rect.left + int(
-                (value / maximum) * rect.width
+                ((value - minimum) / (maximum - minimum)) * rect.width
             )
 
             pygame.draw.circle(
@@ -399,19 +472,19 @@ class Editor:
 
             self.screen.blit(
                 axis_label,
-                (panel_x + 10, panel_y + 95),
+                (panel_x + 10, panel_y + 138),
             )
 
             x_rect = pygame.Rect(
                 panel_x + 90,
-                panel_y + 92,
+                panel_y + 135,
                 55,
                 25,
             )
 
             y_rect = pygame.Rect(
                 panel_x + 155,
-                panel_y + 92,
+                panel_y + 135,
                 55,
                 25,
             )
@@ -526,7 +599,8 @@ class Editor:
 
         self.draw_active_layer(x, y)
 
-        self.draw_animation_controls()
+        if self.show_animation_panel:
+            self.draw_animation_controls()
 
         mx, my = pygame.mouse.get_pos()
         wx, wy = self.camera.screen_to_world(mx, my)
@@ -575,9 +649,18 @@ class Editor:
 
         self.draw_message()
 
-        self.draw_brush_cursor()
+        if not (
+            self.show_animation_panel
+            and self.get_animation_panel_rect().collidepoint(
+                pygame.mouse.get_pos()
+            )
+        ):
+            self.draw_brush_cursor()
 
         pygame.display.flip()
+
+        if self.show_animation_controls:
+            self.draw_animation_controls()
 
 
     def draw_help(self):

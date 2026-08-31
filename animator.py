@@ -62,6 +62,20 @@ class Animator:
 
         return settings["speed"]
 
+    def set_rotation(self, layer_index, value):
+        settings = self.layers.get(layer_index)
+
+        if settings is not None:
+            settings["rotation_amplitude"] = value
+
+    def get_rotation(self, layer_index):
+        settings = self.layers.get(layer_index)
+
+        if settings is None:
+            return 0.0
+
+        return settings["rotation_amplitude"]
+
     def update(self, dt):
         self.time += dt
 
