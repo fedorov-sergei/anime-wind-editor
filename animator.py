@@ -11,25 +11,25 @@ class Animator:
                 "axis": "x",
                 "amplitude": 10.0,
                 "speed": 2.0,
-                "rotation_amplitude": 0.0,
+                "angle": 0.0,
             },
             2: {
                 "axis": "y",
                 "amplitude": 6.0,
                 "speed": 1.5,
-                "rotation_amplitude": 0.0,
+                "angle": 0.0,
             },
             3: {
                 "axis": "x",
                 "amplitude": 0.0,
                 "speed": 0.0,
-                "rotation_amplitude": 0.0,
+                "angle": 0.0,
             },
             4: {
                 "axis": "x",
                 "amplitude": 0.0,
                 "speed": 0.0,
-                "rotation_amplitude": 0.0,
+                "angle": 0.0,
             },
         }
 
@@ -62,19 +62,19 @@ class Animator:
 
         return settings["speed"]
 
-    def set_rotation(self, layer_index, value):
+    def set_angle(self, layer_index, value):
         settings = self.layers.get(layer_index)
 
         if settings is not None:
-            settings["rotation_amplitude"] = value
+            settings["angle"] = value
 
-    def get_rotation(self, layer_index):
+    def get_angle(self, layer_index):
         settings = self.layers.get(layer_index)
 
         if settings is None:
             return 0.0
 
-        return settings["rotation_amplitude"]
+        return settings["angle"]
 
     def update(self, dt):
         self.time += dt
@@ -90,17 +90,12 @@ class Animator:
             self.time * settings["speed"]
         ) * settings["amplitude"]
 
-        rotation = math.sin(
-            self.time * settings["speed"]
-        ) * settings["rotation_amplitude"]
+        angle = math.radians(settings["angle"])
 
-        if settings["axis"] == "x":
-            return (value, 0, rotation)
+        x = math.cos(angle) * value
+        y = math.sin(angle) * value
 
-        if settings["axis"] == "y":
-            return (0, value, rotation)
-
-        return (0, 0, rotation)
+        return (x, y, 0)
 
     def set_axis(self, layer_index, axis):
         settings = self.layers.get(layer_index)
