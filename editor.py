@@ -176,6 +176,32 @@ class Editor:
                                 self.slider_value("rotation", event.pos[0]),
                             )
 
+                        elif self.get_slider_rect("distortion").collidepoint(event.pos):
+                            self.slider_dragging = "distortion"
+                            self.animator.set_distortion(
+                                self.current_layer,
+                                self.slider_value("distortion", event.pos[0]),
+                            )
+
+                        elif self.get_slider_rect("wave_size").collidepoint(event.pos):
+                            self.slider_dragging = "wave_size"
+                            self.animator.set_wave_size(
+                                self.current_layer,
+                                self.slider_value("wave_size", event.pos[0]),
+                            )
+
+                        elif self.get_slider_rect("wave_axis").collidepoint(event.pos):
+                            current_axis = self.animator.get_wave_axis(
+                                self.current_layer
+                            )
+
+                            new_axis = "y" if current_axis == "x" else "x"
+
+                            self.animator.set_wave_axis(
+                                self.current_layer,
+                                new_axis,
+                            )
+
                     else:
                         self.erase_mode = False
                         self.painting = True
@@ -221,6 +247,18 @@ class Editor:
                         self.slider_value("rotation", event.pos[0]),
                     )
 
+                elif self.slider_dragging == "distortion":
+                    self.animator.set_distortion(
+                        self.current_layer,
+                        self.slider_value("distortion", event.pos[0]),
+                    )
+
+                elif self.slider_dragging == "wave_size":
+                    self.animator.set_wave_size(
+                        self.current_layer,
+                        self.slider_value("wave_size", event.pos[0]),
+                    )
+
                 if self.panning:
                     dx = event.pos[0] - self.last_mouse_pos[0]
                     dy = event.pos[1] - self.last_mouse_pos[1]
@@ -250,8 +288,8 @@ class Editor:
                 )
 
     def get_animation_panel_rect(self):
-        panel_width = 260
-        panel_height = 170
+        panel_width = 300
+        panel_height = 240
 
         panel_x = config.WINDOW_WIDTH - panel_width - 20
         panel_y = (
@@ -269,8 +307,8 @@ class Editor:
         )
 
     def get_slider_rect(self, name):
-        panel_width = 260
-        panel_height = 170
+        panel_width = 300
+        panel_height = 240
         panel_x = config.WINDOW_WIDTH - panel_width - 20
         panel_y = (
             config.WINDOW_HEIGHT
@@ -281,24 +319,48 @@ class Editor:
 
         if name == "amount":
             return pygame.Rect(
-                panel_x + 112,
-                panel_y + 30,
+                panel_x + 140,
+                panel_y + 35,
                 140,
                 8,
             )
 
         if name == "speed":
             return pygame.Rect(
-                panel_x + 112,
-                panel_y + 65,
+                panel_x + 140,
+                panel_y + 70,
                 140,
                 8,
             )
 
         if name == "rotation":
             return pygame.Rect(
-                panel_x + 112,
-                panel_y + 100,
+                panel_x + 140,
+                panel_y + 105,
+                140,
+                8,
+            )
+
+        if name == "distortion":
+            return pygame.Rect(
+                panel_x + 140,
+                panel_y + 140,
+                140,
+                8,
+            )
+
+        if name == "wave_size":
+            return pygame.Rect(
+                panel_x + 140,
+                panel_y + 175,
+                140,
+                8,
+            )
+
+        if name == "wave_axis":
+            return pygame.Rect(
+                panel_x + 140,
+                panel_y + 210,
                 140,
                 8,
             )
@@ -326,12 +388,18 @@ class Editor:
         if name == "rotation":
             return -90.0 + position * 180.0
 
+        if name == "distortion":
+            return position * 30.0
+
+        if name == "wave_size":
+            return 16.0 + position * 240.0
+
         return 0.0
 
     def draw_animation_controls(self) -> None:
 
-        panel_width = 260
-        panel_height = 170
+        panel_width = 300
+        panel_height = 240
 
         panel_x = config.WINDOW_WIDTH - panel_width - 20
         panel_y = (
@@ -361,15 +429,56 @@ class Editor:
 
         self.screen.blit(
             title,
-            (panel_x + 10, panel_y + 5),
+            (
+                panel_x + (panel_width - title.get_width()) // 2,
+                panel_y + 5,
+            ),
         )
 
         for name, label in (
             ("amount", "Amount"),
             ("speed", "Speed"),
             ("rotation", "Direction"),
+            ("distortion", "Distortion"),
+            ("wave_size", "Wave Size"),
+            ("wave_axis", "Wave Axis"),
         ):
             rect = self.get_slider_rect(name)
+
+            if name == "wave_axis":
+                axis = self.animator.get_wave_axis(self.current_layer)
+
+                pygame.draw.rect(
+                    self.screen,
+                    (100, 100, 100),
+                    rect,
+                    border_radius=4,
+                )
+
+                knob_x = rect.left if axis == "x" else rect.right
+
+                pygame.draw.circle(
+                    self.screen,
+                    (255, 255, 255),
+                    (knob_x, rect.centery),
+                    7,
+                )
+
+                text = self.font.render(
+                    f"Wave Axis {axis.upper()}",
+                    True,
+                    (255, 255, 255),
+                )
+
+                self.screen.blit(
+                    text,
+                    (
+                        panel_x + 10,
+                        rect.centery - text.get_height() // 2,
+                    ),
+                )
+
+                continue
 
             pygame.draw.rect(
                 self.screen,
@@ -392,12 +501,29 @@ class Editor:
                 minimum = 0.0
                 maximum = 5.0
 
-            else:
+            elif name == "rotation":
                 value = self.animator.get_angle(
                     self.current_layer
                 )
                 minimum = -90.0
                 maximum = 90.0
+
+            elif name == "distortion":
+                value = self.animator.get_distortion(self.current_layer)
+                minimum = 0.0
+                maximum = 30.0
+
+            elif name == "wave_size":
+                value = self.animator.get_wave_size(self.current_layer)
+                minimum = 16.0
+                maximum = 256.0
+
+            else:
+                value = self.animator.get_distortion(
+                    self.current_layer
+                )
+                minimum = 0.0
+                maximum = 30.0
 
             knob_x = rect.left + int(
                 ((value - minimum) / (maximum - minimum)) * rect.width
@@ -418,7 +544,10 @@ class Editor:
 
             self.screen.blit(
                 text,
-                (panel_x + 10, rect.top - 7),
+                (
+                    panel_x + 10,
+                    rect.centery - text.get_height() // 2,
+                ),
             )
 
 
@@ -487,6 +616,7 @@ class Editor:
         image = self.renderer.render(
             self.cached_image,
             layers,
+            self.animator.time,
         )
 
         self.screen.blit(
