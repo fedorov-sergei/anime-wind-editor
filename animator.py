@@ -8,7 +8,6 @@ class Animator:
 
         self.layers = {
             1: {
-                "axis": "x",
                 "amplitude": 10.0,
                 "speed": 2.0,
                 "angle": 0.0,
@@ -17,7 +16,6 @@ class Animator:
                 "wave_axis": "x",
             },
             2: {
-                "axis": "y",
                 "amplitude": 6.0,
                 "speed": 1.5,
                 "angle": 0.0,
@@ -26,7 +24,6 @@ class Animator:
                 "wave_axis": "x",
             },
             3: {
-                "axis": "x",
                 "amplitude": 0.0,
                 "speed": 0.0,
                 "angle": 0.0,
@@ -35,7 +32,6 @@ class Animator:
                 "wave_axis": "x",
             },
             4: {
-                "axis": "x",
                 "amplitude": 0.0,
                 "speed": 0.0,
                 "angle": 0.0,
@@ -146,20 +142,6 @@ class Animator:
             settings["wave_size"],
             settings["wave_axis"],
         )
-
-    def set_axis(self, layer_index, axis):
-        settings = self.layers.get(layer_index)
-
-        if settings is not None and axis in ("x", "y"):
-            settings["axis"] = axis
-
-    def get_axis(self, layer_index):
-        settings = self.layers.get(layer_index)
-
-        if settings is None:
-            return "x"
-
-        return settings["axis"]
 
     def set_wave_axis(self, layer_index, axis):
         settings = self.layers.get(layer_index)
